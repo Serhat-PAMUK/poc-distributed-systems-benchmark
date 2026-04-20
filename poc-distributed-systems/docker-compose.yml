@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+
+  app:
+    build: .
+    container_name: poc-distributed-systems
+    ports:
+      - "8080:8080"
+    depends_on:
+      - hazelcast-1
+      - hazelcast-2
+      - redis
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+    networks:
+      - hazelcast-net
+
+  hazelcast-1:
+    image: hazelcast/hazelcast:5.3
+    container_name: hazelcast-1
+    ports:
+      - "5701:5701"
+    environment:
+      - HZ_CLUSTERNAME=dev
+      - JAVA_OPTS=-Dhazelcast.local.publicAddress=hazelcast-1:5701
+    networks:
+      - hazelcast-net
+
+  hazelcast-2:
+    image: hazelcast/hazelcast:5.3
+    container_name: hazelcast-2
+    ports:
+      - "5702:5701"
+    environment:
+      - HZ_CLUSTERNAME=dev
+      - JAVA_OPTS=-Dhazelcast.local.publicAddress=hazelcast-2:5701
+    networks:
+      - hazelcast-net
+
+  redis:
+    image: redis:7
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - hazelcast-net
+
+networks:
+  hazelcast-net:
+    driver: bridge
