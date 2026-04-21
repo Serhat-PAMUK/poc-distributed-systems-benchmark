@@ -7,14 +7,21 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
-@Profile("embedded")
+@Profile("docker")
 @Configuration
-public class HazelcastConfig {
+public class HazelcastDockerConfig {
 
     @Bean
     public HazelcastInstance hazelcastInstance() {
-        Config config=new Config();
+        Config config = new Config();
         config.setClusterName("dev");
-        return Hazelcast.newHazelcastInstance();
+
+        // docker için önemli
+        config.getNetworkConfig()
+                .getJoin()
+                .getTcpIpConfig()
+                .setEnabled(true);
+
+        return Hazelcast.newHazelcastInstance(config);
     }
 }

@@ -20,7 +20,7 @@ public class CacheBenchmarkRunner implements CommandLineRunner {
     private final CacheService hazelcastCacheService;
 
 
-    private final DataModel mode = DataModel.LARGE;
+    private final DataModel mode = DataModel.SMALL;
     private final KvModel kvModel = KvModel.STRUCTURED_KV;
     public CacheBenchmarkRunner(
             @Qualifier("redisCacheService") CacheService redisCacheService,

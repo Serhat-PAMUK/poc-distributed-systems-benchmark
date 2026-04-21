@@ -3,18 +3,19 @@ version: '3.8'
 services:
 
   app-1:
-    image: poc-app:embedded
+    image: poc-app
     container_name: app-1
     ports:
       - "8081:8080"
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_PROFILES_ACTIVE=embedded
       - SPRING_DATA_REDIS_HOST=redis
       - SPRING_DATA_REDIS_PORT=6379
     depends_on:
-      - redis
+      - redis-1
       - hazelcast-1
       - hazelcast-2
+      - hazelcast-3
     networks:
       - hazelcast-net
 
@@ -24,13 +25,14 @@ services:
       ports:
         - "8082:8080"
       environment:
-        - SPRING_PROFILES_ACTIVE=docker
+        - SPRING_PROFILES_ACTIVE=embedded
         - SPRING_DATA_REDIS_HOST=redis
         - SPRING_DATA_REDIS_PORT=6379
       depends_on:
-        - redis
+        - redis-1
         - hazelcast-1
         - hazelcast-2
+        - hazelcast-3
       networks:
         - hazelcast-net
 
@@ -40,13 +42,14 @@ services:
       ports:
         - "8083:8080"
       environment:
-        - SPRING_PROFILES_ACTIVE=docker
+        - SPRING_PROFILES_ACTIVE=embedded
         - SPRING_DATA_REDIS_HOST=redis
         - SPRING_DATA_REDIS_PORT=6379
       depends_on:
-        - redis
+        - redis-1
         - hazelcast-1
         - hazelcast-2
+        - hazelcast-3
       networks:
         - hazelcast-net
 
@@ -73,13 +76,63 @@ services:
     networks:
       - hazelcast-net
 
-  redis:
+  hazelcast-3:
+      image: hazelcast/hazelcast:5.3
+      container_name: hazelcast-3
+      ports:
+        - "5703:5701"
+      environment:
+        - HZ_CLUSTERNAME=dev
+        - JAVA_OPTS=-Dhazelcast.local.publicAddress=hazelcast-2:5701
+      networks:
+        - hazelcast-net
+
+  redis-1:
     image: redis:7
-    container_name: redis
+    container_name: redis-1
     ports:
-      - "6379:6379"
+      - "7001:6379"
+    command: >
+      redis-server
+      --port 6379
+      --cluster-enabled yes
+      --cluster-config-file nodes.conf
+      --cluster-node-timeout 5000
+      --appendonly yes
     networks:
       - hazelcast-net
+
+  redis-2:
+      image: redis:7
+      container_name: redis-2
+      ports:
+        - "7002:6379"
+      command: >
+        redis-server
+        --port 6379
+        --cluster-enabled yes
+        --cluster-config-file nodes.conf
+        --cluster-node-timeout 5000
+        --appendonly yes
+      networks:
+        - hazelcast-net
+
+  redis-3:
+      image: redis:7
+      container_name: redis-3
+      ports:
+        - "7003:6379"
+      command: >
+        redis-server
+        --port 6379
+        --cluster-enabled yes
+        --cluster-config-file nodes.conf
+        --cluster-node-timeout 5000
+        --appendonly yes
+      networks:
+        - hazelcast-net
+
+
 
 networks:
   hazelcast-net:

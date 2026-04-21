@@ -16,18 +16,12 @@ public class HazalCastClientConfig {
 
     @Bean
     public HazelcastInstance hazelcastClient(
-            @Value("${hazelcast.servers:127.0.0.1:5701,127.0.0.1:5702}") String servers) {
+            @Value("${hazelcast.servers:127.0.0.1:5701}") String servers) {
 
         ClientConfig config = new ClientConfig();
 
-        String[] serverArray = servers.split(",");
-        config.getNetworkConfig().addAddress(serverArray);
-
-
-        config.getNetworkConfig().setConnectionTimeout(5000);
-
-
-        config.setInstanceName("spring-hazelcast-client");
+        config.getNetworkConfig()
+                .addAddress(servers.split(","));
 
         return HazelcastClient.newHazelcastClient(config);
     }
