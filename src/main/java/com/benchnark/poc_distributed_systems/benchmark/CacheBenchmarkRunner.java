@@ -1,14 +1,20 @@
 package com.benchnark.poc_distributed_systems.benchmark;
 
 import com.benchnark.poc_distributed_systems.cache.CacheService;
+
 import com.benchnark.poc_distributed_systems.enums.DataModel;
 import com.benchnark.poc_distributed_systems.Factory.DataFactory;
 import com.benchnark.poc_distributed_systems.config.BenchmarkConfig;
 import com.benchnark.poc_distributed_systems.enums.KvModel;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.map.IMap;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.Properties;
 import java.util.Random;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -17,17 +23,34 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class CacheBenchmarkRunner implements CommandLineRunner {
 
     private final CacheService redisCacheService;
-    private final CacheService hazelcastCacheService;
+    private final CacheService hazelcastCacheService
+            ;
 
 
     private final DataModel mode = DataModel.SMALL;
-    private final KvModel kvModel = KvModel.STRUCTURED_KV;
+    private final KvModel kvModel = KvModel.HEAVY_KV;
     public CacheBenchmarkRunner(
             @Qualifier("redisCacheService") CacheService redisCacheService,
             @Qualifier("hazelcastCacheService") CacheService hazelcastCacheService
     ) {
         this.redisCacheService = redisCacheService;
         this.hazelcastCacheService = hazelcastCacheService;
+    }
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+    private long getRedisMemory() {
+        Properties info = redisTemplate.getRequiredConnectionFactory()
+                .getConnection()
+                .info("memory");
+
+        return Long.parseLong(info.getProperty("used_memory"));
+    }
+    @Autowired
+    private HazelcastInstance hazelcastInstance;
+    private long getHazelcastMemory() {
+        IMap<Object, Object> map = hazelcastInstance.getMap("default");
+
+        return map.getLocalMapStats().getHeapCost();
     }
 
     @Override
@@ -53,7 +76,8 @@ public class CacheBenchmarkRunner implements CommandLineRunner {
 
     private void warmup(CacheService cache) {
         for (int i = 0; i < 10_000; i++) {
-            var data = DataFactory.generate(mode,kvModel,i);
+            var data = DataFactory.generate(mode
+                    ,kvModel,i);
             cache.put(data.getKey(), data.getValue());
         }
     }
@@ -64,6 +88,7 @@ public class CacheBenchmarkRunner implements CommandLineRunner {
             case LARGE -> 500_000;
         };
     }
+
 
     private void runBenchmark(CacheService cache) throws Exception {
 
@@ -96,13 +121,21 @@ public class CacheBenchmarkRunner implements CommandLineRunner {
 
         executor.shutdown();
         executor.awaitTermination(10, TimeUnit.MINUTES);
+        Thread.sleep(2000);
+        System.gc();
+
+            long mem = getRedisMemory();
+            System.out.println("Redis Memory: " + mem / (1024 * 1024) + " MB");
+            long memes=getHazelcastMemory();
+            System.out.println("Hazelcast Memory:" +memes/ (1024*1024) + "MB");
 
         long end = System.currentTimeMillis();
-
         double seconds = (end - start) / 1000.0;
         double opsPerSec = ops / seconds;
         System.out.println("\n--- RESULTS ---");
         System.out.println("Total Time: " + (end - start) + " ms");
         System.out.println("Throughput: " + opsPerSec + " ops/sec");
+
+
     }
 }

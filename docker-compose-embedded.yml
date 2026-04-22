@@ -8,51 +8,65 @@ services:
     ports:
       - "8081:8080"
     environment:
-      - SPRING_PROFILES_ACTIVE=embedded
-      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PASSWORD=Serhat1234.
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATA_REDIS_HOST=redis-master
       - SPRING_DATA_REDIS_PORT=6379
     depends_on:
-      - redis-1
-      - hazelcast-1
-      - hazelcast-2
-      - hazelcast-3
+      redis-master:
+        condition: service_healthy
+      hazelcast-1:
+        condition: service_started
+      hazelcast-2:
+        condition: service_started
+      hazelcast-3:
+        condition: service_started
     networks:
       - hazelcast-net
 
   app-2:
-      image: poc-app
-      container_name: app-2
-      ports:
-        - "8082:8080"
-      environment:
-        - SPRING_PROFILES_ACTIVE=embedded
-        - SPRING_DATA_REDIS_HOST=redis
-        - SPRING_DATA_REDIS_PORT=6379
-      depends_on:
-        - redis-1
-        - hazelcast-1
-        - hazelcast-2
-        - hazelcast-3
-      networks:
-        - hazelcast-net
+    image: poc-app
+    container_name: app-2
+    ports:
+      - "8082:8080"
+    environment:
+      - SPRING_DATA_REDIS_PASSWORD=Serhat1234.
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATA_REDIS_HOST=redis-master
+      - SPRING_DATA_REDIS_PORT=6379
+    depends_on:
+      redis-master:
+        condition: service_healthy
+      hazelcast-1:
+        condition: service_started
+      hazelcast-2:
+        condition: service_started
+      hazelcast-3:
+        condition: service_started
+    networks:
+      - hazelcast-net
 
   app-3:
-      image: poc-app
-      container_name: app-3
-      ports:
-        - "8083:8080"
-      environment:
-        - SPRING_PROFILES_ACTIVE=embedded
-        - SPRING_DATA_REDIS_HOST=redis
-        - SPRING_DATA_REDIS_PORT=6379
-      depends_on:
-        - redis-1
-        - hazelcast-1
-        - hazelcast-2
-        - hazelcast-3
-      networks:
-        - hazelcast-net
-
+    image: poc-app
+    container_name: app-3
+    ports:
+      - "8083:8080"
+    environment:
+      - SPRING_DATA_REDIS_PASSWORD=Serhat1234.
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATA_REDIS_HOST=redis-master
+      - SPRING_DATA_REDIS_PORT=6379
+    depends_on:
+      redis-master:
+        condition: service_healthy
+      hazelcast-1:
+        condition: service_started
+      hazelcast-2:
+        condition: service_started
+      hazelcast-3:
+        condition: service_started
+    networks:
+      - hazelcast-net
 
   hazelcast-1:
     image: hazelcast/hazelcast:5.3
@@ -77,63 +91,51 @@ services:
       - hazelcast-net
 
   hazelcast-3:
-      image: hazelcast/hazelcast:5.3
-      container_name: hazelcast-3
-      ports:
-        - "5703:5701"
-      environment:
-        - HZ_CLUSTERNAME=dev
-        - JAVA_OPTS=-Dhazelcast.local.publicAddress=hazelcast-2:5701
-      networks:
-        - hazelcast-net
-
-  redis-1:
-    image: redis:7
-    container_name: redis-1
+    image: hazelcast/hazelcast:5.3
+    container_name: hazelcast-3
     ports:
-      - "7001:6379"
-    command: >
-      redis-server
-      --port 6379
-      --cluster-enabled yes
-      --cluster-config-file nodes.conf
-      --cluster-node-timeout 5000
-      --appendonly yes
+      - "5703:5701"
+    environment:
+      - HZ_CLUSTERNAME=dev
+      - JAVA_OPTS=-Dhazelcast.local.publicAddress=hazelcast-3:5701
     networks:
       - hazelcast-net
 
-  redis-2:
-      image: redis:7
-      container_name: redis-2
-      ports:
-        - "7002:6379"
-      command: >
-        redis-server
-        --port 6379
-        --cluster-enabled yes
-        --cluster-config-file nodes.conf
-        --cluster-node-timeout 5000
-        --appendonly yes
-      networks:
-        - hazelcast-net
+  redis-master:
+    image: redis:7
+    container_name: redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass Serhat1234.
+    networks:
+      - hazelcast-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "Serhat1234.", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
-  redis-3:
-      image: redis:7
-      container_name: redis-3
-      ports:
-        - "7003:6379"
-      command: >
-        redis-server
-        --port 6379
-        --cluster-enabled yes
-        --cluster-config-file nodes.conf
-        --cluster-node-timeout 5000
-        --appendonly yes
-      networks:
-        - hazelcast-net
+  redis-slave-1:
+    image: redis:7
+    container_name: redis-slave-1
+    ports:
+      - "6380:6379"
+    command: redis-server --appendonly yes --slaveof redis-master 6379 --masterauth Serhat1234. --requirepass Serhat1234.
+    depends_on:
+      - redis-master
+    networks:
+      - hazelcast-net
 
-
-
+  redis-slave-2:
+    image: redis:7
+    container_name: redis-slave-2
+    ports:
+      - "6381:6379"
+    command: redis-server --appendonly yes --slaveof redis-master 6379 --masterauth Serhat1234. --requirepass Serhat1234.
+    depends_on:
+      - redis-master
+    networks:
+      - hazelcast-net
 networks:
   hazelcast-net:
     driver: bridge

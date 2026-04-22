@@ -6,7 +6,7 @@ import com.benchnark.poc_distributed_systems.model.CacheData;
 
 public class DataFactory {
 
-    public static CacheData generate(DataModel mode, KvModel kvModel, int i) {
+    public static CacheData generate( DataModel model,KvModel kvModel, int i) {
 
         String key = "user-" + i;
 
@@ -19,6 +19,23 @@ public class DataFactory {
 
         return new CacheData(key, value);
     }
+    public static CacheData generateOneMillion(KvModel kvModel) {
+
+        for (int i = 0; i < 1_000_000; i++) {
+
+            String key = "user-" + i;
+
+            String value = switch (kvModel) {
+                case SIMPLE_KV -> simple(i);
+                case STRUCTURED_KV -> structured(i);
+                case HEAVY_KV -> heavy(i);
+            };
+
+            return new CacheData(key, value);
+        }
+        return null;
+    }
+
 
     private static String simple(int i) {
         return "{"

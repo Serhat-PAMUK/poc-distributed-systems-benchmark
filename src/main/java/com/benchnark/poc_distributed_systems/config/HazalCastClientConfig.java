@@ -16,7 +16,7 @@ public class HazalCastClientConfig {
 
     @Bean
     public HazelcastInstance hazelcastClient(
-            @Value("${hazelcast.servers:127.0.0.1:5701}") String servers) {
+            @Value("${hazelcast.servers}") String servers) {
 
         ClientConfig config = new ClientConfig();
 
