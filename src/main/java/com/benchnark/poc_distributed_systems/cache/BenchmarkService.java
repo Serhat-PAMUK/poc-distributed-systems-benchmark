@@ -1,7 +1,6 @@
 package com.benchnark.poc_distributed_systems.cache;
 
 import com.benchnark.poc_distributed_systems.Factory.DataFactory;
-import com.benchnark.poc_distributed_systems.enums.DataModel;
 import com.benchnark.poc_distributed_systems.enums.KvModel;
 import com.benchnark.poc_distributed_systems.model.CacheData;
 import org.springframework.stereotype.Service;
@@ -23,7 +22,7 @@ public class BenchmarkService {
         this.cacheService = cacheService;
     }
 
-    public void bulkLoad( KvModel kvModel) {
+    public void bulkLoad(KvModel kvModel) {
 
         long start = System.currentTimeMillis();
 
@@ -31,13 +30,21 @@ public class BenchmarkService {
 
         for (int i = 0; i < TOTAL; i++) {
             batch.add(DataFactory.generateOneMillion(kvModel));
+
+            if ((i + 1) % 1000 == 0) {
+                System.out.println("✅ " + (i + 1) + " / " + TOTAL + " veri oluşturuldu");
+            }
         }
 
-        cacheService.putAll(batch);
+        System.out.println("📤 Veriler gönderiliyor...");
+        cacheService.putBatch(batch);
+        System.out.println("fonksiyona girdi");
+
+
 
         long end = System.currentTimeMillis();
 
-        System.out.println("BULK LOAD TIME: " + (end - start) + " ms");
+        System.out.println("🎉 BULK LOAD TIME: " + (end - start) + " ms");
     }
 
 

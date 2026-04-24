@@ -10,18 +10,29 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
+import java.util.Arrays;
+import java.util.List;
+
 @Profile("external")
 @Configuration
 public class HazalCastClientConfig {
 
     @Bean
-    public HazelcastInstance hazelcastClient(
-            @Value("${hazelcast.servers}") String servers) {
+    public HazelcastInstance hazelcastClient() {
 
         ClientConfig config = new ClientConfig();
 
-        config.getNetworkConfig()
-                .addAddress(servers.split(","));
+        config.setClusterName("dev");
+
+        config.getNetworkConfig().setConnectionTimeout(5000);
+
+        config.getNetworkConfig().setAddresses(
+                List.of(
+                        "localhost:5701",
+                        "localhost:5702",
+                        "localhost:5703"
+                )
+        );
 
         return HazelcastClient.newHazelcastClient(config);
     }

@@ -1,4 +1,4 @@
-package com.benchnark.poc_distributed_systems.benchmark;
+/*package com.benchnark.poc_distributed_systems.benchmark;
 
 import com.benchnark.poc_distributed_systems.cache.CacheService;
 
@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
-
 import java.util.Properties;
 import java.util.Random;
 import java.util.concurrent.*;
@@ -22,9 +21,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Component
 public class CacheBenchmarkRunner implements CommandLineRunner {
 
+    private RedisTemplate<String, Object> redisTemplate;
     private final CacheService redisCacheService;
-    private final CacheService hazelcastCacheService
-            ;
+    private final CacheService hazelcastCacheService;
 
 
     private final DataModel mode = DataModel.SMALL;
@@ -36,8 +35,8 @@ public class CacheBenchmarkRunner implements CommandLineRunner {
         this.redisCacheService = redisCacheService;
         this.hazelcastCacheService = hazelcastCacheService;
     }
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
+
+
     private long getRedisMemory() {
         Properties info = redisTemplate.getRequiredConnectionFactory()
                 .getConnection()
@@ -139,3 +138,5 @@ public class CacheBenchmarkRunner implements CommandLineRunner {
 
     }
 }
+
+ */

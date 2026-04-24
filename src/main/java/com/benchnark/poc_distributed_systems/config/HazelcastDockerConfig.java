@@ -16,7 +16,7 @@ public class HazelcastDockerConfig {
         Config config = new Config();
         config.setClusterName("dev");
 
-        // docker için önemli
+
         config.getNetworkConfig()
                 .getJoin()
                 .getTcpIpConfig()

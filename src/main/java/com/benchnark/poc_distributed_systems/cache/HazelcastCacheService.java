@@ -3,21 +3,20 @@ package com.benchnark.poc_distributed_systems.cache;
 import com.benchnark.poc_distributed_systems.model.CacheData;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
-import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-
+import java.util.stream.Collectors;
 
 @Service("hazelcastCacheService")
+@Primary
 public class HazelcastCacheService implements CacheService {
 
     private final IMap<String, String> map;
-    private final StringRedisTemplate redisTemplate;
 
-    public HazelcastCacheService(HazelcastInstance instance, StringRedisTemplate redisTemplate) {
-        this.map = instance.getMap("com/benchnark/poc_distributed_systems/cache");
-        this.redisTemplate = redisTemplate;
+    public HazelcastCacheService(HazelcastInstance hazelcastInstance) {
+        this.map = hazelcastInstance.getMap("cache");
     }
 
     @Override
@@ -29,17 +28,21 @@ public class HazelcastCacheService implements CacheService {
     public String get(String key) {
         return map.get(key);
     }
-    @Override
-    public void putt(CacheData data) {
-        redisTemplate.opsForValue().set(
-                data.getKey(),
-                data.getValue()
-        );
 
-        }
+
     @Override
-    public void putAll(List<CacheData> list) {
-        list.forEach(this::putt);
+    public void putt(CacheData datad) {
+        map.put(datad.getKey(), String.valueOf(datad));
     }
+
+
+    @Override
+    public void putBatch(List<CacheData> dataList) {
+        for (CacheData data : dataList) {
+            map.put(data.getKey(), data.getValue());
+        }
     }
+}
+
+
 

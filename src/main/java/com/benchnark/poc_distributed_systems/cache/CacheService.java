@@ -7,8 +7,7 @@ import java.util.List;
 public interface CacheService {
     void put (String key, String value);
     String get(String key);
-
-    void putAll(List<CacheData> data);
     void putt(CacheData data);
+    void putBatch(List<CacheData> data);
 
 }

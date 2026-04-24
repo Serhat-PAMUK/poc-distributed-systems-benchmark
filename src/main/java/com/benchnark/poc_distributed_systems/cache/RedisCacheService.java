@@ -26,7 +26,7 @@ public class RedisCacheService implements CacheService {
     }
 
     @Override
-    public void putAll(List<CacheData> data) {
+    public void putBatch(List<CacheData> data) {
         for (CacheData item : data) {
             redis.opsForValue().set(
                     item.getKey(),
