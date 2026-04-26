@@ -1,4 +1,4 @@
-package com.benchnark.poc_distributed_systems.config;//package com.benchnark.poc_distributed_systems.config;
+/* package com.benchnark.poc_distributed_systems.config;//package com.benchnark.poc_distributed_systems.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -54,3 +54,5 @@ public class RedisClusterConfig {
         return template;
     }
 }
+
+ */

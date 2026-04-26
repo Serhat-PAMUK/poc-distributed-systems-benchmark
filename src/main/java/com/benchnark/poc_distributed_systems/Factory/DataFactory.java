@@ -19,21 +19,16 @@ public class DataFactory {
 
         return new CacheData(key, value);
     }
-    public static CacheData generateOneMillion(KvModel kvModel) {
+    public static CacheData generateOneMillion(KvModel kvModel, int i) {
+        String key = "user-" + i;
 
-        for (int i = 0; i < 1_000_000; i++) {
+        String value = switch (kvModel) {
+            case SIMPLE_KV -> simple(i);
+            case STRUCTURED_KV -> structured(i);
+            case HEAVY_KV -> heavy(i);
+        };
 
-            String key = "user-" + i;
-
-            String value = switch (kvModel) {
-                case SIMPLE_KV -> simple(i);
-                case STRUCTURED_KV -> structured(i);
-                case HEAVY_KV -> heavy(i);
-            };
-
-            return new CacheData(key, value);
-        }
-        return null;
+        return new CacheData(key, value);
     }
 
 

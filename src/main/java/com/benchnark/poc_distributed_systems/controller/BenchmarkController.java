@@ -25,13 +25,13 @@ public class BenchmarkController {
             @RequestParam KvModel kvModel
     ) {
         benchmarkService.bulkLoad(kvModel);
-        return ResponseEntity.ok("1M data load started (bulk)");
+        return ResponseEntity.ok("1M data load finished (bulk)");
     }
     @PostMapping("/parallel-load")
     public ResponseEntity<String> parallelLoad(
             @RequestParam KvModel kvModel
     ) {
         benchmarkService.parallelLoad( kvModel);
-        return ResponseEntity.ok("1M data load started (parallel)");
+        return ResponseEntity.ok("1M data load finished (parallel)");
     }
 }

@@ -30,7 +30,7 @@ public class HazelcastCacheService implements CacheService {
 
     @Override
     public void putt(CacheData datad) {
-        map.put(datad.getKey(), String.valueOf(datad));
+        map.put(datad.getKey(), datad.getValue());
     }
 
 
@@ -41,6 +41,3 @@ public class HazelcastCacheService implements CacheService {
         }
     }
 }
-
-
-

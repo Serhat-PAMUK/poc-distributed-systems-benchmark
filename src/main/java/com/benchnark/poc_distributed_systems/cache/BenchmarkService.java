@@ -29,7 +29,7 @@ public class BenchmarkService {
         List<CacheData> batch = new ArrayList<>(TOTAL);
 
         for (int i = 0; i < TOTAL; i++) {
-            batch.add(DataFactory.generateOneMillion(kvModel));
+            batch.add(DataFactory.generateOneMillion(kvModel,i));
 
             if ((i + 1) % 1000 == 0) {
                 System.out.println("✅ " + (i + 1) + " / " + TOTAL + " veri oluşturuldu");
@@ -66,7 +66,7 @@ public class BenchmarkService {
 
             futures.add(executor.submit(() -> {
                 for (int i = startIdx; i < endIdx; i++) {
-                    CacheData data = DataFactory.generateOneMillion( kvModel );
+                    CacheData data = DataFactory.generateOneMillion( kvModel,i );
                     cacheService.putt(data);
                 }
             }));
