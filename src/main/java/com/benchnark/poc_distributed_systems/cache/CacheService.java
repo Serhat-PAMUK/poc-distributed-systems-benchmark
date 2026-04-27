@@ -9,5 +9,5 @@ public interface CacheService {
     String get(String key);
     void putt(CacheData data);
     void putBatch(List<CacheData> data);
-
+    int putBatchCorrect(List<CacheData> data);
 }

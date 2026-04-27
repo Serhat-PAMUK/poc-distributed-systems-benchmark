@@ -1,12 +1,14 @@
 package com.benchnark.poc_distributed_systems.cache;
 
 import com.benchnark.poc_distributed_systems.model.CacheData;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service("redisCacheService")
+@Primary
 public class RedisCacheService implements CacheService {
 
     private final StringRedisTemplate redis;
@@ -33,6 +35,11 @@ public class RedisCacheService implements CacheService {
                     item.getValue()
             );
         }
+    }
+
+    @Override
+    public int putBatchCorrect(List<CacheData> data) {
+        return 0;
     }
 
     @Override

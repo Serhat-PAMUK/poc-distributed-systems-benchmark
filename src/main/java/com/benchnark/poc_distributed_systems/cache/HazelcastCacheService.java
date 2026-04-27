@@ -7,8 +7,9 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import java.util.List;
 
+
 @Service("hazelcastCacheService")
-@Primary
+
 public class HazelcastCacheService implements CacheService {
 
     private final IMap<String, String> map;
@@ -40,4 +41,11 @@ public class HazelcastCacheService implements CacheService {
             map.put(data.getKey(), data.getValue());
         }
     }
+
+    @Override
+    public int putBatchCorrect(List<CacheData> data) {
+            return 0;
+    }
+
+
 }

@@ -27,6 +27,12 @@ public class BenchmarkController {
         benchmarkService.bulkLoad(kvModel);
         return ResponseEntity.ok("1M data load finished (bulk)");
     }
+    @PostMapping("/redisBenchmark")
+    public ResponseEntity<String> redisBenchmark(@RequestParam KvModel kvModel){
+        benchmarkService.redisBenchmark(kvModel);
+        return  ResponseEntity.ok("Redis benchmark parallel");
+    }
+
     @PostMapping("/parallel-load")
     public ResponseEntity<String> parallelLoad(
             @RequestParam KvModel kvModel
