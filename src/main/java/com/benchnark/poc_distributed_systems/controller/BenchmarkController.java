@@ -1,7 +1,6 @@
 package com.benchnark.poc_distributed_systems.controller;
 
 import com.benchnark.poc_distributed_systems.cache.BenchmarkService;
-import com.benchnark.poc_distributed_systems.enums.DataModel;
 import com.benchnark.poc_distributed_systems.enums.KvModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,11 +19,11 @@ public class BenchmarkController {
         this.benchmarkService = benchmarkService;
     }
 
-    @PostMapping("/bulk-load")
+    @PostMapping("/hazelcastBechmark")
     public ResponseEntity<String> bulkLoad(
             @RequestParam KvModel kvModel
     ) {
-        benchmarkService.bulkLoad(kvModel);
+        benchmarkService.hazelcastBenchmark(kvModel);
         return ResponseEntity.ok("1M data load finished (bulk)");
     }
     @PostMapping("/redisBenchmark")
@@ -33,11 +32,19 @@ public class BenchmarkController {
         return  ResponseEntity.ok("Redis benchmark parallel");
     }
 
-    @PostMapping("/parallel-load")
+    @PostMapping("/redisparallel")
     public ResponseEntity<String> parallelLoad(
             @RequestParam KvModel kvModel
     ) {
-        benchmarkService.parallelLoad( kvModel);
-        return ResponseEntity.ok("1M data load finished (parallel)");
+        benchmarkService.redisParallelBenchmark( kvModel);
+        return ResponseEntity.ok("1M data load finished redis(parallel)");
     }
+    @PostMapping("/hazelcastparallel")
+    public ResponseEntity<String> hazelCastParallel(
+        @RequestParam KvModel kvModel){
+        benchmarkService.hazelcastParallelBenchmark(kvModel);
+        return ResponseEntity.ok("1m finished parallel hazelcast");
+
+}
+
 }

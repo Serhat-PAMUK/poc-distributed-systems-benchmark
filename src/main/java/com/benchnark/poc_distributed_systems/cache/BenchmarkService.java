@@ -3,20 +3,17 @@ package com.benchnark.poc_distributed_systems.cache;
 import com.benchnark.poc_distributed_systems.Factory.DataFactory;
 import com.benchnark.poc_distributed_systems.enums.KvModel;
 import com.benchnark.poc_distributed_systems.model.CacheData;
-import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 import org.springframework.stereotype.Service;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.Pipeline;
-
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class BenchmarkService {
@@ -31,59 +28,51 @@ public class BenchmarkService {
         this.cacheService = cacheService;
     }
 
-    public void bulkLoad(KvModel kvModel) {
-
-        long start = System.currentTimeMillis();
-
-        List<CacheData> batch = new ArrayList<>(TOTAL);
-
-        for (int i = 0; i < TOTAL; i++) {
-            batch.add(DataFactory.generateOneMillion(kvModel,i));
-
-            if ((i + 1) % 1000 == 0) {
-                System.out.println("✅ " + (i + 1) + " / " + TOTAL + " veri oluşturuldu");
-            }
-        }
-
-        System.out.println("📤 Veriler gönderiliyor...");
-        cacheService.putBatch(batch);
-        System.out.println("fonksiyona girdi");
-
-
-
-        long end = System.currentTimeMillis();
-
-        System.out.println("🎉 BULK LOAD TIME: " + (end - start) + " ms");
-    }
     public void hazelcastBenchmark(KvModel kvModel) {
-        System.out.println("🚀 Hazelcast Benchmark Başlatıldı...");
-        long start = System.currentTimeMillis();
+        int[] batchSizes = {10000,15000,25000,40000,70000, 100000,200000,400000,500000};
 
+        for (int batchSize : batchSizes) {
+            System.out.println("\n--- [HAZELCAST BENCHMARK START] Batch Size: " + batchSize + " ---");
 
-        IMap<String, String> map = hzInstance.getMap("benchmarkMap");
+            IMap<String, String> map = hzInstance.getMap("benchmarkMap");
 
-        Map<String, String> batchMap = new HashMap<>();
+            map.clear();
 
-        for (int i = 0; i < TOTAL; i++) {
-            CacheData data = DataFactory.generateOneMillion(kvModel, i);
-            batchMap.put(data.getKey(), data.getValue());
+            long start = System.currentTimeMillis();
 
-            if ((i + 1) % 10000 == 0) {
-                map.putAll(batchMap);
-                batchMap.clear();
+            Map<String, String> localBatch = new HashMap<>(batchSize);
+
+            for (int i = 0; i < TOTAL; i++) {
+                CacheData data = DataFactory.generateOneMillion(kvModel, i);
+                localBatch.put(data.getKey(), data.getValue());
+
+                if ((i + 1) % batchSize == 0) {
+                    map.putAll(localBatch);
+                    localBatch.clear(); // Listeyi boşalt ki RAM şişmesin
+                }
+
+                // Her 50k'da bir durum logu
+                if ((i + 1) % 50000 == 0) {
+                    System.out.println("➤ Hazelcast: " + (i + 1) + " / " + TOTAL);
+                }
             }
-        }
-        if (!batchMap.isEmpty()) {
-            map.putAll(batchMap);
-        }
 
-        long end = System.currentTimeMillis();
-        System.out.println("⏱ Hazelcast Toplam Süre: " + (end - start) + " ms");
+            // Eğer son pakette batchSize'dan az veri kaldıysa onları da gönder
+            if (!localBatch.isEmpty()) {
+                map.putAll(localBatch);
+            }
+
+            long end = System.currentTimeMillis();
+            double durationSeconds = (end - start) / 1000.0;
+            System.out.println("✅ [HAZELCAST COMPLETED]");
+            System.out.println("⏱ Toplam Süre: " + durationSeconds + " sn");
+            System.out.println("🚀 Hız: " + (int)(TOTAL / durationSeconds) + " ops/sec");
+        }
     }
 
     public void redisBenchmark(KvModel kvModel) {
 
-        int[] batchSizes = {500000,750000,1000000};
+        int[] batchSizes = {10000,15000,25000,40000,70000, 100000,200000,400000,500000};
 
         for (int batchSize : batchSizes) {
 
@@ -123,43 +112,106 @@ public class BenchmarkService {
             System.out.println("🚀 Hız: " + (int)(TOTAL / durationSeconds) + " ops/sec");
         }
     }
+    public void redisParallelBenchmark(KvModel kvModel) {
+        int[] batchSizes = {10000, 15000, 25000, 40000, 70000, 100000, 200000, 400000, 500000};
+        int threadCount = 2;
 
-    public void parallelLoad( KvModel kvModel) {
+        for (int currentBatchSize : batchSizes) {
+            System.out.println("\n--- [REDIS PARALLEL TEST] Batch: " + currentBatchSize + " | Thread: 8 ---");
+            JedisPoolConfig poolConfig = new JedisPoolConfig();
+            poolConfig.setMaxTotal(64);
 
-        long start = System.currentTimeMillis();
+            // Her batch testi öncesi DB temizliği (isteğe bağlı)
+            try (Jedis cleanJedis = new Jedis("localhost", 6379, 60000, 60000)) {
+                cleanJedis.auth("Serhat1234.");
+                cleanJedis.flushDB();
+                System.out.println("✅ Redis DB başarıyla temizlendi.");
 
-        int threads = 8;
-        ExecutorService executor = Executors.newFixedThreadPool(threads);
+                ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+                int totalPerThread = TOTAL / threadCount;
+                long start = System.currentTimeMillis();
 
-        int batchSize = TOTAL / threads;
+                for (int t = 0; t < threadCount; t++) {
+                    final int startIdx = t * totalPerThread;
+                    final int endIdx = (t == threadCount - 1) ? TOTAL : (t + 1) * totalPerThread;
 
-        List<Future<?>> futures = new ArrayList<>();
+                    executor.submit(() -> {
+                        try (Jedis jedis = new Jedis("redis://:Serhat1234.@localhost:6379")) {
+                            Pipeline p = jedis.pipelined();
+                            for (int i = startIdx; i < endIdx; i++) {
+                                CacheData data = DataFactory.generateOneMillion(kvModel, i);
+                                p.set(data.getKey(), data.getValue());
 
-        for (int t = 0; t < threads; t++) {
-
-            int startIdx = t * batchSize;
-            int endIdx = (t == threads - 1) ? TOTAL : (t + 1) * batchSize;
-
-            futures.add(executor.submit(() -> {
-                for (int i = startIdx; i < endIdx; i++) {
-                    CacheData data = DataFactory.generateOneMillion( kvModel,i );
-                    cacheService.putt(data);
+                                if ((i - startIdx + 1) % currentBatchSize == 0) {
+                                    p.sync();
+                                }
+                            }
+                            p.sync();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    });
                 }
-            }));
-        }
 
-        for (Future<?> f : futures) {
-            try {
-                f.get();
-            } catch (Exception e) {
-                e.printStackTrace();
+                executor.shutdown();
+                try {
+                    executor.awaitTermination(15, TimeUnit.MINUTES);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+
+                long end = System.currentTimeMillis();
+                System.out.println("✅ Batch " + currentBatchSize + " Bitti. Süre: " + (end - start) + " ms");
             }
         }
-
-        executor.shutdown();
-
-        long end = System.currentTimeMillis();
-
-        System.out.println("PARALLEL LOAD TIME: " + (end - start) + " ms");
     }
+     public void hazelcastParallelBenchmark(KvModel kvModel) {
+        int[] batchSizes = {10000, 15000, 25000, 40000, 70000, 100000, 200000, 400000, 500000};
+        int threadCount = 8;
+
+        for (int currentBatchSize : batchSizes) {
+            System.out.println("\n--- [HAZELCAST PARALLEL TEST] Batch: " + currentBatchSize + " | Thread: 8 ---");
+
+            IMap<String, String> map = hzInstance.getMap("benchmarkMap");
+            map.clear(); // Her batch testi öncesi temizlik
+
+            ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+            int totalPerThread = TOTAL / threadCount;
+            long start = System.currentTimeMillis();
+
+            for (int t = 0; t < threadCount; t++) {
+                final int startIdx = t * totalPerThread;
+                final int endIdx = (t == threadCount - 1) ? TOTAL : (t + 1) * totalPerThread;
+
+                executor.submit(() -> {
+                    Map<String, String> localBatch = new HashMap<>(currentBatchSize);
+                    for (int i = startIdx; i < endIdx; i++) {
+                        CacheData data = DataFactory.generateOneMillion(kvModel, i);
+                        localBatch.put(data.getKey(), data.getValue());
+
+                        if (localBatch.size() >= currentBatchSize) {
+                            map.putAll(localBatch);
+                            localBatch.clear();
+                        }
+                    }
+                    if (!localBatch.isEmpty()) {
+                        map.putAll(localBatch);
+                    }
+                });
+            }
+
+            executor.shutdown();
+            try {
+                executor.awaitTermination(15, TimeUnit.MINUTES);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+
+            long end = System.currentTimeMillis();
+            System.out.println("✅ Batch " + currentBatchSize + " Bitti. Süre: " + (end - start) + " ms");
+        }
+    }
+
+
+
 }
