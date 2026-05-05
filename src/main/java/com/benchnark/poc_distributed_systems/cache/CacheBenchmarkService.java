@@ -37,12 +37,10 @@ public class CacheBenchmarkService {
         for (int i = 0; i < totalCount; i++) {
             final int index = i;
             executor.submit(() -> {
-                long start = System.nanoTime(); // Daha hassas ölçüm
+                long start = System.nanoTime();
                 try {
-                    // Veriyi üret (Senin Factory metodun)
                     CacheData data = generateOneMillion(model, index);
 
-                    // 2. PARAMETRİK SEÇİM
                     if ("redis".equalsIgnoreCase(system)) {
                         redisTemplate.opsForValue().set(data.getKey(), data.getValue());
                     } else {
@@ -55,7 +53,6 @@ public class CacheBenchmarkService {
 
                 } catch (Exception e) {
                     errors.incrementAndGet();
-                    // Failover anında hatanın ne olduğunu görmek için
                     if (errors.get() % 100 == 0) {
                         System.err.println("Bağlantı Hatası: " + e.getMessage());
                     }

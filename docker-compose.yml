@@ -1,7 +1,8 @@
 services:
 
   app-1:
-    image: poc-app
+    build: .
+    image: poc-app:latest
     container_name: app-1
     ports:
       - "8081:8080"
@@ -26,11 +27,12 @@ services:
       hazelcast-3:
         condition: service_started
     networks:
-      - hazelcast-net
+      - hazelcast-net 
 
   app-2:
-    image: poc-app
     container_name: app-2
+    image: poc-app:latest
+
     ports:
       - "8082:8080"
     environment:
@@ -54,11 +56,12 @@ services:
       hazelcast-3:
         condition: service_started
     networks:
-      - hazelcast-net
+      - hazelcast-net 
 
   app-3:
-    image: poc-app
     container_name: app-3
+    image: poc-app:latest
+
     ports:
       - "8083:8080"
     environment:
@@ -82,7 +85,7 @@ services:
       hazelcast-3:
         condition: service_started
     networks:
-      - hazelcast-net
+      - hazelcast-net 
 
   hazelcast-1:
     image: hazelcast/hazelcast:5.3
@@ -95,11 +98,10 @@ services:
       - HZ_NETWORK_JOIN_TCPIP_ENABLED=true
       - HZ_NETWORK_JOIN_MULTICAST_ENABLED=false
       - HZ_NETWORK_JOIN_TCPIP_MEMBERS=hazelcast-1:5701,hazelcast-2:5701,hazelcast-3:5701
-      - HZ_NETWORK_PUBLICADDRESS=localhost:5701
 
 
     networks:
-      - hazelcast-net
+      - hazelcast-net 
 
   hazelcast-2:
     image: hazelcast/hazelcast:5.3
@@ -111,9 +113,8 @@ services:
       - HZ_NETWORK_JOIN_TCPIP_ENABLED=true
       - HZ_NETWORK_JOIN_MULTICAST_ENABLED=false
       - HZ_NETWORK_JOIN_TCPIP_MEMBERS=hazelcast-1:5701,hazelcast-2:5701,hazelcast-3:5701
-      - HZ_NETWORK_PUBLICADDRESS=localhost:5702
     networks:
-      - hazelcast-net
+      - hazelcast-net 
 
   hazelcast-3:
     image: hazelcast/hazelcast:5.3
@@ -125,9 +126,8 @@ services:
       - HZ_NETWORK_JOIN_TCPIP_ENABLED=true
       - HZ_NETWORK_JOIN_MULTICAST_ENABLED=false
       - HZ_NETWORK_JOIN_TCPIP_MEMBERS=hazelcast-1:5701,hazelcast-2:5701,hazelcast-3:5701
-      - HZ_NETWORK_PUBLICADDRESS=localhost:5703
     networks:
-      - hazelcast-net
+      - hazelcast-net 
 
   redis-master:
     image: redis:7
@@ -154,7 +154,7 @@ services:
     depends_on:
       - redis-master
     networks:
-      - hazelcast-net
+      - hazelcast-net 
 
   redis-slave-2:
     image: redis:7
@@ -165,7 +165,7 @@ services:
     depends_on:
       - redis-master
     networks:
-      - hazelcast-net
+      - hazelcast-net 
 
   redis-sentinel-1:
     image: redis:7
@@ -188,7 +188,7 @@ services:
     ports:
       - "26379:26379"
     networks:
-      - hazelcast-net
+      - hazelcast-net 
 
   prometheus:
       image: prom/prometheus:latest
@@ -229,7 +229,7 @@ services:
     ports:
       - "26380:26379"
     networks:
-      - hazelcast-net
+      - hazelcast-net 
 
   redis-sentinel-3:
     image: redis:7
@@ -252,7 +252,7 @@ services:
     ports:
       - "26381:26379"
     networks:
-      - hazelcast-net
+      - hazelcast-net 
 
 networks:
   hazelcast-net:

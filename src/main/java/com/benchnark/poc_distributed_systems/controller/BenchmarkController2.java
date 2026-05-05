@@ -23,7 +23,7 @@ public class BenchmarkController2 {
     public String startTest(
             @RequestParam String system,      // redis veya hazelcast
             @RequestParam int threads,        // 10, 100, 500
-            @RequestParam KvModel model,      // SIMPLE_KV, STRUCTURED_KV, HEAVY_KV
+            @RequestParam KvModel model,
             @RequestParam(defaultValue = "1000000") int count) {
 
         CompletableFuture.runAsync(() ->
